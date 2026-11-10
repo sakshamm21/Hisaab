@@ -1,0 +1,39 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Frontend
+web/node_modules/
+web/dist/
+hisaab/static/
+
+# Never commit real financial data: statements, exports, databases
+*.pdf
+*.csv
+*.xls
+*.xlsx
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/
+backups/
+
+# Local secrets and editor files
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+
+# Local tooling
+.claude/
+.dev-data/
+*.tsbuildinfo

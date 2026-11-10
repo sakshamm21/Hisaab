@@ -1,0 +1,168 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Components use only the semantic names (bg-surface, text-muted,
+   text-income ...), so light and dark differ only here.
+   Light = warm paper + ink violet.   Dark = ink black + soft periwinkle.
+   Green and red are reserved for money in / money out and under / over budget.
+   --------------------------------------------------------------------------- */
+:root {
+  --background: #f4f1ea;
+  --surface: #fffdf8;
+  --surface-muted: #ece7dc;
+  --surface-raised: #ffffff;
+  --border: #e2dbcc;
+  --border-strong: #cdc3b0;
+  --foreground: #121117;
+  --muted: #5f5a68;
+  --subtle: #8d8896;
+
+  --primary: #5b45e0;
+  --primary-hover: #4a35cf;
+  --primary-soft: rgb(91 69 224 / 0.1);
+  --primary-soft-foreground: #4a35cf;
+  --primary-foreground: #ffffff;
+  --highlight: #ffb648;
+
+  --income: #13815a;
+  --income-soft: rgb(19 129 90 / 0.1);
+  --expense: #c8364a;
+  --expense-soft: rgb(200 54 74 / 0.09);
+  --warning: #b7791f;
+  --warning-soft: rgb(255 182 72 / 0.18);
+
+  --ring: rgb(91 69 224 / 0.4);
+  --grain-opacity: 0.045;
+}
+
+.dark {
+  --background: #0b0b0f;
+  --surface: #131318;
+  --surface-muted: #1b1b22;
+  --surface-raised: #20202a;
+  --border: #26262f;
+  --border-strong: #363641;
+  --foreground: #f3f0e8;
+  --muted: #a3a0ac;
+  --subtle: #6f6c7a;
+
+  --primary: #a99bff;
+  --primary-hover: #bdb2ff;
+  --primary-soft: rgb(169 155 255 / 0.12);
+  --primary-soft-foreground: #bdb2ff;
+  --primary-foreground: #0b0b0f;
+  --highlight: #ffc56b;
+
+  --income: #45d39a;
+  --income-soft: rgb(69 211 154 / 0.12);
+  --expense: #ff6b7d;
+  --expense-soft: rgb(255 107 125 / 0.12);
+  --warning: #ffc56b;
+  --warning-soft: rgb(255 197 107 / 0.12);
+
+  --ring: rgb(169 155 255 / 0.45);
+  --grain-opacity: 0.06;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-foreground: var(--primary-soft-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-highlight: var(--highlight);
+  --color-income: var(--income);
+  --color-income-soft: var(--income-soft);
+  --color-expense: var(--expense);
+  --color-expense-soft: var(--expense-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-ring: var(--ring);
+
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+  --font-display: 'Bricolage Grotesque Variable', 'Geist Variable', sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+
+  --shadow-soft: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 1px 2px rgb(0 0 0 / 0.08);
+  --shadow-lifted: 0 18px 40px -18px rgb(0 0 0 / 0.35);
+  --shadow-overlay: 0 30px 80px -20px rgb(0 0 0 / 0.55);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Mono uppercase labels, Sync-style. */
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-muted;
+  }
+  /* Every amount uses tabular figures so columns of numbers line up. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum', 'zero';
+  }
+}
+
+/* Privacy blur: one toggle hides every amount (screen sharing). */
+html.privacy [data-amount] {
+  filter: blur(7px);
+  transition: filter 150ms;
+}
+html.privacy [data-amount]:hover {
+  filter: none;
+}
+
+/* Subtle paper grain over everything. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 100;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
