@@ -1,6 +1,6 @@
 import { Command } from 'cmdk';
 import { AnimatePresence, motion } from 'motion/react';
-import { Eye, EyeOff, Moon, Search, Sun } from 'lucide-react';
+import { Eye, EyeOff, Moon, Plus, Search, Sun, Upload } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -8,7 +8,15 @@ import { usePreferences } from '../lib/preferences';
 import { ALL_NAV } from './nav';
 import { Kbd } from './ui';
 
-export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+export function CommandPalette({
+  open,
+  onOpenChange,
+  onQuickAdd,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onQuickAdd: () => void;
+}) {
   const navigate = useNavigate();
   const { toggleTheme, privacy, togglePrivacy } = usePreferences();
 
@@ -60,6 +68,17 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               </div>
               <Command.List className="max-h-[50vh] overflow-y-auto p-2">
                 <Command.Empty className="px-4 py-8 text-center text-sm text-muted">Nothing matches.</Command.Empty>
+                <Group heading="Do">
+                  <Item value="Add a transaction" keywords={['new', 'expense', 'quick add']} onSelect={() => run(onQuickAdd)}>
+                    <Plus className="size-4 text-muted" />
+                    <span>Add a transaction</span>
+                    <Kbd className="ml-auto">N</Kbd>
+                  </Item>
+                  <Item value="Import a statement" keywords={['upload', 'pdf', 'csv', 'bank']} onSelect={() => run(() => navigate('/import'))}>
+                    <Upload className="size-4 text-muted" />
+                    <span>Import a statement</span>
+                  </Item>
+                </Group>
                 <Group heading="Go to">
                   {ALL_NAV.map((item) => (
                     <Item key={item.to} value={item.label} keywords={[item.hint]} onSelect={() => run(() => navigate(item.to))}>

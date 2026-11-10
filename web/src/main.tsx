@@ -14,8 +14,11 @@ import { AppShell } from './components/AppShell';
 import { PreferencesProvider } from './lib/preferences';
 import { Accounts } from './pages/Accounts';
 import { Dashboard } from './pages/Dashboard';
-import { Bills, Budget, Goals, Reports, Settings } from './pages/Placeholders';
+import { Import } from './pages/Import';
+import { Bills, Budget, Goals, Reports } from './pages/Placeholders';
+import { Settings } from './pages/Settings';
 import { Transactions } from './pages/Transactions';
+import { Welcome } from './pages/Welcome';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false, retry: 1 } },
@@ -27,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
       <PreferencesProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="welcome" element={<div className="px-4 py-10"><Welcome /></div>} />
             <Route element={<AppShell />}>
               <Route index element={<Dashboard />} />
               <Route path="transactions" element={<Transactions />} />
@@ -36,6 +40,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="goals" element={<Goals />} />
               <Route path="accounts" element={<Accounts />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="import" element={<Import />} />
               <Route path="*" element={<Dashboard />} />
             </Route>
           </Routes>

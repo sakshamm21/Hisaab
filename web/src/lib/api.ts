@@ -2,25 +2,35 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public detail?: unknown,
   ) {
     super(message);
   }
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
+  const { json, ...rest } = init ?? {};
   const res = await fetch(`/api${path}`, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    ...rest,
+    body: json !== undefined ? JSON.stringify(json) : rest.body,
+    headers: json !== undefined ? { 'Content-Type': 'application/json', ...rest.headers } : rest.headers,
   });
   if (!res.ok) {
-    let detail = res.statusText;
+    let detail: unknown = res.statusText;
     try {
       detail = (await res.json()).detail ?? detail;
     } catch {
       /* not JSON */
     }
-    throw new ApiError(res.status, typeof detail === 'string' ? detail : JSON.stringify(detail));
+    const message =
+      typeof detail === 'string'
+        ? detail
+        : Array.isArray(detail)
+          ? detail.map((d: { msg?: string }) => d.msg).join(', ')
+          : ((detail as { message?: string })?.message ?? 'Something went wrong');
+    throw new ApiError(res.status, message, detail);
   }
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -30,14 +40,20 @@ export type Meta = {
   settings: { currency: string; locale: string; month_start_day: number; theme: string };
 };
 
+export type AccountKind = 'bank' | 'cash' | 'credit_card' | 'wallet' | 'investment' | 'loan';
+
 export type Account = {
   id: number;
   name: string;
-  kind: 'bank' | 'cash' | 'credit_card' | 'wallet' | 'investment' | 'loan';
+  kind: AccountKind;
   currency: string;
   balance: number;
+  opening_balance: number;
+  opening_date: string;
   transaction_count: number;
   include_in_net_worth: number;
+  archived: number;
+  last_transaction: string | null;
 };
 
 export type Transaction = {
@@ -49,16 +65,53 @@ export type Transaction = {
   notes: string;
   tags: string;
   is_transfer: number;
+  transfer_id: string | null;
+  transfer_account_id: number | null;
+  transfer_account: string | null;
   reviewed: number;
+  is_person: number;
+  exclude_from_reports: number;
+  import_id: number | null;
+  split_count: number;
   account_id: number;
   account: string;
   category_id: number | null;
   category: string | null;
   category_icon: string | null;
   category_color: string | null;
+  splits?: Split[];
 };
 
-export type Page<T> = { total: number; items: T[] };
+export type Split = {
+  id: number;
+  amount: number;
+  category_id: number | null;
+  notes: string;
+  category: string | null;
+  category_icon: string | null;
+  category_color: string | null;
+};
+
+export type Page<T> = { total: number; net?: number; items: T[] };
+
+export type Category = {
+  id: number;
+  group_id: number;
+  name: string;
+  icon: string;
+  color: string;
+  bucket: 'need' | 'want' | 'saving' | null;
+  rollover: number;
+  archived: number;
+  transaction_count: number;
+};
+
+export type CategoryGroup = {
+  id: number;
+  name: string;
+  kind: 'expense' | 'income';
+  categories: Category[];
+};
 
 export type CategorySpend = {
   id: number | null;
@@ -79,3 +132,60 @@ export type Summary = {
   by_category: CategorySpend[];
   inbox_count: number;
 };
+
+export type Rule = {
+  id: number;
+  field: 'payee' | 'description';
+  match: 'contains' | 'equals' | 'regex';
+  pattern: string;
+  set_category_id: number | null;
+  set_payee: string | null;
+  category: string | null;
+  priority: number;
+};
+
+export type PreviewRow = {
+  index: number;
+  date: string;
+  amount: number;
+  payee: string;
+  description: string;
+  category_id: number | null;
+  category_source: 'rule' | 'memory' | 'known' | null;
+  kind: string;
+  is_person: boolean;
+  reference: string;
+  fingerprint: string;
+  duplicate: boolean;
+  match_id: number | null;
+  transfer_account_id: number | null;
+  balance: number | null;
+  balance_ok: boolean;
+  skip?: boolean;
+  user_set?: boolean;
+};
+
+export type ImportPreview = {
+  format: string;
+  period: [string, string] | null;
+  account_hint: string;
+  warnings: string[];
+  rows: PreviewRow[];
+  counts: { total: number; duplicates: number; categorized: number; balance_mismatches: number };
+};
+
+export type ImportRecord = {
+  id: number;
+  file_name: string;
+  account: string;
+  account_id: number;
+  rows: number;
+  imported: number;
+  skipped: number;
+  format: string;
+  period_start: string | null;
+  period_end: string | null;
+  created_at: string;
+};
+
+export type Backup = { name: string; size: number; created: string; kind: string };

@@ -32,11 +32,10 @@ def month_summary(
     month = month or date.today().strftime("%Y-%m")
     start, end = _month_bounds(month)
     base = """
-        FROM transactions t
+        FROM report_tx t
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN category_groups g ON g.id = c.group_id
-        WHERE t.date >= ? AND t.date < ? AND t.transfer_id IS NULL
-          AND t.exclude_from_reports = 0 AND t.split_parent_id IS NULL
+        WHERE t.date >= ? AND t.date < ?
     """
     totals = db.execute(
         f"""
