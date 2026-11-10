@@ -1,6 +1,6 @@
 import { Command } from 'cmdk';
 import { AnimatePresence, motion } from 'motion/react';
-import { Eye, EyeOff, Moon, Plus, Search, Sun, Upload } from 'lucide-react';
+import { CalendarCheck, Eye, EyeOff, Moon, Plus, Search, Sun, Upload } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -73,6 +73,10 @@ export function CommandPalette({
                     <Plus className="size-4 text-muted" />
                     <span>Add a transaction</span>
                     <Kbd className="ml-auto">N</Kbd>
+                  </Item>
+                  <Item value="Month in review" keywords={['last month', 'summary', 'review']} onSelect={() => run(() => navigate('/review'))}>
+                    <CalendarCheck className="size-4 text-muted" />
+                    <span>Last month in review</span>
                   </Item>
                   <Item value="Import a statement" keywords={['upload', 'pdf', 'csv', 'bank']} onSelect={() => run(() => navigate('/import'))}>
                     <Upload className="size-4 text-muted" />

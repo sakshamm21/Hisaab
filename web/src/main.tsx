@@ -18,7 +18,8 @@ import { Import } from './pages/Import';
 import { Bills } from './pages/Bills';
 import { Budget } from './pages/Budget';
 import { Goals } from './pages/Goals';
-import { Reports } from './pages/Placeholders';
+import { Reports } from './pages/Reports';
+import { Review } from './pages/Review';
 import { Settings } from './pages/Settings';
 import { Transactions } from './pages/Transactions';
 import { Welcome } from './pages/Welcome';
@@ -44,6 +45,8 @@ createRoot(document.getElementById('root')!).render(
               <Route path="accounts" element={<Accounts />} />
               <Route path="settings" element={<Settings />} />
               <Route path="import" element={<Import />} />
+              <Route path="review" element={<Review />} />
+              <Route path="review/:period" element={<Review />} />
               <Route path="*" element={<Dashboard />} />
             </Route>
           </Routes>
