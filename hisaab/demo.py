@@ -185,3 +185,55 @@ def generate_demo(conn: sqlite3.Connection, today: date | None = None, months: i
             " SELECT payee, category_id, COUNT(*) FROM transactions"
             " WHERE category_id IS NOT NULL AND transfer_id IS NULL GROUP BY payee, category_id"
         )
+
+        _demo_plan(conn, today, bank, card)
+
+
+def _demo_plan(conn: sqlite3.Connection, today: date, bank: int, card: int) -> None:
+    """Recurring bills, goals and budgets, so every page has something to show."""
+    from hisaab import periods
+    from hisaab.recurring import add_cadence, sync
+
+    cats = category_ids(conn)
+
+    def next_on(day: int) -> str:
+        d = today.replace(day=day)
+        return (d if d > today else add_cadence(d, "monthly")).isoformat()
+
+    items = [
+        ("Rent", "Landlord", "bill", -22_000_00, next_on(3), "Rent", bank),
+        ("SIP · Parag Parikh", "Parag Parikh Flexi Cap SIP", "bill", -10_000_00, next_on(5), "Investments", bank),
+        ("Spotify", "Spotify", "subscription", -59_00, next_on(8), "Subscriptions", bank),
+        ("Netflix", "Netflix", "subscription", -199_00, next_on(14), "Subscriptions", card),
+        ("Electricity", "BSES Electricity", "bill", -1_800_00, next_on(12), "Bills & recharges", bank),
+        ("Salary", "Acme Technologies", "income", 85_000_00, next_on(1), "Salary", bank),
+    ]
+    conn.executemany(
+        "INSERT INTO recurring (name, payee, match_text, kind, amount, cadence, next_due, category_id, account_id)"
+        " VALUES (?,?,?,?,?, 'monthly', ?,?,?)",
+        [(n, p, p, k, a, d, cats[c], acc) for n, p, k, a, d, c, acc in items],
+    )
+    conn.execute(
+        "INSERT INTO recurring (name, payee, match_text, kind, amount, cadence, next_due, category_id, account_id)"
+        " VALUES ('Jio recharge', 'Jio Prepaid', 'Jio Prepaid', 'bill', -34900, 'monthly', ?, ?, ?)",
+        (next_on(20), cats["Bills & recharges"], bank),
+    )
+
+    goa = conn.execute(
+        "INSERT INTO goals (name, target_amount, target_date, icon, color) VALUES ('Goa trip', 4000000, ?, 'plane', '#2fa5a5')",
+        (add_cadence(add_cadence(today, "monthly"), "monthly", 3).isoformat(),),
+    ).lastrowid
+    for months_ago, amount in ((3, 6_000_00), (2, 6_000_00), (1, 5_000_00)):
+        day = add_cadence(today.replace(day=2), "monthly", -months_ago)
+        conn.execute("INSERT INTO goal_entries (goal_id, date, amount) VALUES (?,?,?)", (goa, day.isoformat(), amount))
+    conn.execute("INSERT INTO goals (name, target_amount, starting_amount, icon, color)"
+                 " VALUES ('Emergency fund', 30000000, 9000000, 'shield', '#5b45e0')")
+
+    budgets = {"Rent": 22_000, "Groceries": 6_000, "Bills & recharges": 3_000, "Food delivery": 5_500,
+               "Eating out": 4_000, "Cabs": 2_500, "Transport & fuel": 1_500, "Shopping": 4_000,
+               "Subscriptions": 400, "Entertainment": 1_000, "Health": 1_000, "Investments": 10_000, "Misc": 1_000}
+    current = periods.current(conn, today)
+    for label in (periods.shift(current, -1), current):
+        conn.executemany("INSERT INTO budgets (month, category_id, amount) VALUES (?,?,?)",
+                         [(label, cats[name], rupees * 100) for name, rupees in budgets.items()])
+    sync(conn, today)

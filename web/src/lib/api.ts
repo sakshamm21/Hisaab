@@ -122,8 +122,20 @@ export type CategorySpend = {
   count: number;
 };
 
-export type Summary = {
+export type PeriodInfo = {
+  period: string;
+  start: string;
+  end: string;
+  days: number;
+  days_elapsed: number;
+  days_left: number;
+  is_current: boolean;
+  label: string;
+};
+
+export type Summary = PeriodInfo & {
   month: string;
+  previous: { income: number; spending: number; spending_to_date: number };
   income: number;
   spending: number;
   net: number;
@@ -189,3 +201,111 @@ export type ImportRecord = {
 };
 
 export type Backup = { name: string; size: number; created: string; kind: string };
+
+export type BudgetCategory = {
+  id: number;
+  name: string;
+  icon: string;
+  color: string;
+  bucket: 'need' | 'want' | 'saving' | null;
+  rollover: number;
+  budgeted: number;
+  carry: number;
+  spent: number;
+  available: number;
+  average: number;
+  last: number;
+  has_budget: boolean;
+};
+
+export type Budget = PeriodInfo & {
+  groups: { id: number; name: string; categories: BudgetCategory[] }[];
+  totals: {
+    budgeted: number;
+    spent: number;
+    income: number;
+    available: number;
+    unbudgeted_spend: number;
+    safe_per_day: number | null;
+    to_budget: number;
+  };
+  split: {
+    actual: Record<'need' | 'want' | 'saving', number>;
+    base: number;
+    targets: Record<'need' | 'want' | 'saving', number>;
+  };
+};
+
+export type Cadence = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export type Recurring = {
+  id: number;
+  name: string;
+  payee: string;
+  kind: 'bill' | 'subscription' | 'income';
+  amount: number;
+  cadence: Cadence;
+  interval: number;
+  next_due: string;
+  last_paid: string | null;
+  category_id: number | null;
+  category: string | null;
+  category_icon: string | null;
+  category_color: string | null;
+  account_id: number | null;
+  account: string | null;
+  auto_post: number;
+  active: number;
+  notes: string;
+  monthly_cost: number;
+};
+
+export type Upcoming = {
+  recurring_id: number;
+  name: string;
+  amount: number;
+  date: string;
+  kind: Recurring['kind'];
+  category: string | null;
+  category_icon: string | null;
+  category_color: string | null;
+  status: 'overdue' | 'today' | 'upcoming';
+  days: number;
+};
+
+export type DetectedRecurring = {
+  payee: string;
+  name: string;
+  amount: number;
+  cadence: Cadence;
+  next_due: string;
+  last_paid: string;
+  kind: Recurring['kind'];
+  category_id: number | null;
+  category: string | null;
+  account_id: number | null;
+  occurrences: number;
+  monthly_cost: number;
+};
+
+export type Goal = {
+  id: number;
+  name: string;
+  target_amount: number;
+  target_date: string | null;
+  starting_amount: number;
+  account_id: number | null;
+  icon: string;
+  color: string;
+  notes: string;
+  archived: number;
+  saved: number;
+  remaining: number;
+  progress: number;
+  pace_per_month: number;
+  needed_per_month: number | null;
+  months_left: number | null;
+  on_track: boolean | null;
+  projected_date: string | null;
+  entries: { id: number; date: string; amount: number }[];
+};
