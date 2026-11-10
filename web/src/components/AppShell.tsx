@@ -1,11 +1,14 @@
-import { Eye, EyeOff, Moon, Search, Sun, Upload } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
-import { NavLink, Outlet } from 'react-router';
+import { Eye, EyeOff, Moon, Plus, Search, Sun, Upload } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
 import { cn } from '../lib/cn';
 import { usePreferences } from '../lib/preferences';
-import { useMeta, useSummary } from '../lib/queries';
+import { useAccounts, useMeta, useSummary } from '../lib/queries';
+import { isTyping, UiActionsContext, type UiActions } from '../lib/ui-actions';
 import { CommandPalette } from './CommandPalette';
+import { QuickAdd } from './QuickAdd';
+import { TransactionEditor } from './TransactionEditor';
 import { Logo } from './Logo';
 import { ALL_NAV, NAV_SECTIONS, SETTINGS_ITEM, type NavItem } from './nav';
 import { Kbd } from './ui';
@@ -14,11 +17,42 @@ const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigat
 
 export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [editing, setEditing] = useState<number | null>(null);
   const { data: meta } = useMeta();
+  const { data: accounts, isSuccess, isFetching } = useAccounts();
+  const location = useLocation();
+
+  const actions = useMemo<UiActions>(
+    () => ({
+      openQuickAdd: () => setQuickAddOpen(true),
+      openTransaction: (id) => setEditing(id),
+      openPalette: () => setPaletteOpen(true),
+    }),
+    [],
+  );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isTyping(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'n') {
+        e.preventDefault();
+        setQuickAddOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // First run: no accounts yet, so set things up before anything else.
+  if (isSuccess && !isFetching && accounts.length === 0 && location.pathname !== '/welcome') {
+    return <Navigate to="/welcome" replace />;
+  }
 
   return (
+    <UiActionsContext.Provider value={actions}>
     <div className="min-h-dvh">
-      <Sidebar onSearch={() => setPaletteOpen(true)} demo={meta?.demo ?? false} />
+      <Sidebar onSearch={() => setPaletteOpen(true)} onAdd={() => setQuickAddOpen(true)} demo={meta?.demo ?? false} />
       <MobileTopBar onSearch={() => setPaletteOpen(true)} />
 
       <main className="px-4 pt-6 pb-32 sm:px-8 lg:ml-[264px] lg:px-12 lg:pt-14 lg:pb-16">
@@ -32,14 +66,18 @@ export function AppShell() {
         </div>
       </main>
 
-      <MobileDock />
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <MobileDock onAdd={() => setQuickAddOpen(true)} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onQuickAdd={() => setQuickAddOpen(true)} />
+      <QuickAdd open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
+      <TransactionEditor id={editing} onClose={() => setEditing(null)} />
     </div>
+    </UiActionsContext.Provider>
   );
 }
 
-function Sidebar({ onSearch, demo }: { onSearch: () => void; demo: boolean }) {
+function Sidebar({ onSearch, onAdd, demo }: { onSearch: () => void; onAdd: () => void; demo: boolean }) {
   const { data: summary } = useSummary();
+  const navigate = useNavigate();
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-border bg-surface/60 px-4 py-6 backdrop-blur lg:flex">
       <div className="px-2">
@@ -71,13 +109,21 @@ function Sidebar({ onSearch, demo }: { onSearch: () => void; demo: boolean }) {
       </nav>
 
       <div className="space-y-3 border-t border-border pt-4">
-        <button
-          disabled
-          title="Statement import arrives in Phase 1"
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground opacity-60"
-        >
-          <Upload className="size-4" /> Import statement
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onAdd}
+            className="flex h-10 flex-1 items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground transition hover:bg-primary-hover"
+          >
+            <Plus className="size-4" /> Add <Kbd className="border-transparent bg-white/15 text-current">N</Kbd>
+          </button>
+          <button
+            onClick={() => navigate('/import')}
+            title="Import a statement"
+            className="flex h-10 items-center justify-center gap-2 rounded-full border border-border px-3.5 text-sm text-muted transition hover:border-border-strong hover:text-foreground"
+          >
+            <Upload className="size-4" /> Import
+          </button>
+        </div>
         <div className="flex items-center gap-1">
           <SideLink item={SETTINGS_ITEM} className="flex-1" />
           <PrivacyToggle />
@@ -166,13 +212,22 @@ function MobileTopBar({ onSearch }: { onSearch: () => void }) {
 }
 
 /** Sync-style floating dock, used only on narrow screens. */
-function MobileDock() {
+function MobileDock({ onAdd }: { onAdd: () => void }) {
   const items = ALL_NAV.filter((i) => i.dock);
   return (
     <nav className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 lg:hidden">
       <ul className="flex items-center gap-1 rounded-full border border-border bg-surface-raised/90 p-1.5 shadow-[var(--shadow-lifted)] backdrop-blur">
-        {items.map((item) => (
-          <li key={item.to}>
+        {items.map((item, i) => (
+          <li key={item.to} className="flex items-center gap-1">
+            {i === 2 && (
+              <button
+                onClick={onAdd}
+                aria-label="Add a transaction"
+                className="grid size-11 place-items-center rounded-full bg-foreground text-background"
+              >
+                <Plus className="size-5" />
+              </button>
+            )}
             <NavLink
               to={item.to}
               end={item.to === '/'}

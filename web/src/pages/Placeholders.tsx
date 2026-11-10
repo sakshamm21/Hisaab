@@ -1,4 +1,4 @@
-import { CalendarClock, ChartPie, PiggyBank, Settings as SettingsIcon, Target } from 'lucide-react';
+import { CalendarClock, ChartPie, PiggyBank, Target } from 'lucide-react';
 
 import { EmptyState, PageHeader } from '../components/ui';
 
@@ -43,17 +43,6 @@ export function Goals() {
       <PageHeader eyebrow="Saving for something" title="Your" accent="goals" />
       <EmptyState icon={Target} title="Save with a target" badge="Phase 2">
         Pick an amount and a date, and Hisaab tells you how much to put aside each month.
-      </EmptyState>
-    </>
-  );
-}
-
-export function Settings() {
-  return (
-    <>
-      <PageHeader eyebrow="Categories, data and AI" title="Your" accent="settings" />
-      <EmptyState icon={SettingsIcon} title="Make it yours" badge="Phase 1">
-        Categories and rules, currency and month start day, backups and export, and your AI key.
       </EmptyState>
     </>
   );

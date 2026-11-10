@@ -32,12 +32,12 @@ DELIVERY = [
     Merchant("Zomato", "zomato-order@ptybl", "YES BANK", "Food delivery", 200, 700),
 ]
 GROCERY = [
-    Merchant("Zepto", "zeptomarketpla@axl", "AXIS BANK", "Groceries", 150, 900),
+    Merchant("Zepto", "zepto.pay@axl", "AXIS BANK", "Groceries", 150, 900),
     Merchant("Blinkit", "blinkit.payu@hdfcbank", "HDFC BANK", "Groceries", 120, 800),
 ]
 SMALL = [
     Merchant("Chai Point", "chaipoint@icici", "ICICI Bank", "Eating out", 20, 60),
-    Merchant("M S Tea Stall", "ibkpos.ep08237@icici", "ICICI Bank", "Eating out", 15, 40),
+    Merchant("M S Tea Stall", "ibkpos.ep00001@icici", "ICICI Bank", "Eating out", 15, 40),
     Merchant("7 Eleven", "7eleven@jio", "JIO PAYMEN", "Groceries", 60, 250),
 ]
 CABS = [
@@ -120,7 +120,7 @@ def generate_demo(conn: sqlite3.Connection, today: date | None = None, months: i
             add(bank, month.replace(day=5), -10_000, "Parag Parikh Flexi Cap SIP", "Investments",
                 f"ACH/PPFAS {month:%d%m%Y}/CAMS/{_ref(rng)}")
             add(bank, month.replace(day=8), -59, "Spotify", "Subscriptions",
-                f"UPI/Spotify In/spotify.bdsi@icici/MandateReq/ICICI Bank/{_ref(rng)}")
+                f"UPI/Spotify In/spotify@icici/MandateReq/ICICI Bank/{_ref(rng)}")
             add(bank, month.replace(day=12), -rng.randint(1_100, 2_400), "BSES Electricity",
                 "Bills & recharges", f"BIL/BBPS/{_ref(rng)}/BSES RAJDHANI")
             add(bank, month.replace(day=20), -349, "Jio Prepaid", "Bills & recharges",

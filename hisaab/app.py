@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from hisaab import __version__
 from hisaab.api import router as api_router
+from hisaab.backup import daily_backup
 from hisaab.config import STATIC_DIR
 from hisaab.db import open_database
 
@@ -23,6 +24,8 @@ UI_MISSING = """<!doctype html><meta charset="utf-8"><title>Hisaab</title>
 
 def create_app(db_path: Path, demo: bool = False, static_dir: Path = STATIC_DIR) -> FastAPI:
     open_database(db_path).close()  # migrate and seed once at startup
+    if not demo:
+        daily_backup(db_path)
 
     app = FastAPI(title="Hisaab", version=__version__, docs_url="/api/docs", redoc_url=None,
                   openapi_url="/api/openapi.json")
