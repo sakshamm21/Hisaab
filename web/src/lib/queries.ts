@@ -3,6 +3,11 @@ import { toast } from 'sonner';
 
 import {
   api,
+  type Budget,
+  type DetectedRecurring,
+  type Goal,
+  type Recurring,
+  type Upcoming,
   type Account,
   type CategoryGroup,
   type Meta,
@@ -95,3 +100,25 @@ export function useMoneyMutation<TVars, TResult = unknown>(
 
 export const updateTransaction = (id: number, patch: Record<string, unknown>) =>
   api<Transaction>(`/transactions/${id}`, { method: 'PATCH', json: patch });
+
+export const useBudget = (period?: string) =>
+  useQuery({
+    queryKey: ['budget', period],
+    queryFn: () => api<Budget>(`/budget/${period}`),
+    enabled: !!period,
+    placeholderData: (prev) => prev,
+  });
+
+export const useRecurring = () =>
+  useQuery({
+    queryKey: ['recurring'],
+    queryFn: () => api<{ items: Recurring[]; totals: { monthly_out: number; yearly_out: number; subscriptions_monthly: number; monthly_in: number } }>('/recurring'),
+  });
+
+export const useUpcoming = (days = 30) =>
+  useQuery({ queryKey: ['recurring', 'upcoming', days], queryFn: () => api<Upcoming[]>(`/recurring/upcoming?days=${days}`) });
+
+export const useDetected = () =>
+  useQuery({ queryKey: ['recurring', 'detect'], queryFn: () => api<DetectedRecurring[]>('/recurring/detect') });
+
+export const useGoals = () => useQuery({ queryKey: ['goals'], queryFn: () => api<Goal[]>('/goals') });
