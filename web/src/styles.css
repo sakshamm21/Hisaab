@@ -35,6 +35,18 @@
 
   --ring: rgb(91 69 224 / 0.4);
   --grain-opacity: 0.045;
+
+  /* Chart series: the validated 8-slot categorical palette (dataviz reference), fixed order. */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #6250d6;
+  --series-8: #e34948;
+  --series-other: #a8a39a;
+  --chart-grid: #e6e0d4;
 }
 
 .dark {
@@ -64,6 +76,17 @@
 
   --ring: rgb(169 155 255 / 0.45);
   --grain-opacity: 0.06;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+  --series-other: #5a5862;
+  --chart-grid: #26262f;
 }
 
 @theme inline {

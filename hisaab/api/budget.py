@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from hisaab import periods
 from hisaab.api.deps import DB
-from hisaab.api.summary import SPEND
+from hisaab.totals import SPEND
 
 router = APIRouter(tags=["budget"])
 

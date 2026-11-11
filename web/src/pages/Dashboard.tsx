@@ -1,4 +1,4 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Inbox } from 'lucide-react';
+import { ArrowDownRight, ArrowRight, ArrowUpRight, CalendarCheck, Inbox } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router';
 
@@ -36,6 +36,17 @@ export function Dashboard() {
           <p className="text-[15px]">
             <span className="num font-semibold">{summary.inbox_count}</span> new transactions to review
           </p>
+          <ArrowRight className="ml-auto size-4 text-muted transition group-hover:translate-x-0.5" />
+        </Link>
+      )}
+
+      {summary && summary.days_elapsed <= 10 && (
+        <Link
+          to="/review"
+          className="group mb-6 flex items-center gap-4 rounded-2xl border border-primary/40 bg-primary-soft px-5 py-4 transition hover:border-primary"
+        >
+          <CalendarCheck className="size-5 text-primary" />
+          <p className="text-[15px]">A new month started. <span className="font-semibold">See how last month went</span> and plan this one.</p>
           <ArrowRight className="ml-auto size-4 text-muted transition group-hover:translate-x-0.5" />
         </Link>
       )}
