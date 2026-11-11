@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from hisaab.api import (
     accounts,
+    ai,
     budget,
     categories,
     data,
@@ -16,5 +17,5 @@ from hisaab.api import (
 )
 
 router = APIRouter(prefix="/api")
-for module in (meta, accounts, categories, transactions, summary, imports, rules, data, budget, plan, reports, understand):
+for module in (meta, accounts, categories, transactions, summary, imports, rules, data, budget, plan, reports, understand, ai):
     router.include_router(module.router)

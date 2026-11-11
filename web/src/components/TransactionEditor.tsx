@@ -45,7 +45,9 @@ function EditorForm({ t, onDone }: { t: Transaction; onDone: () => void }) {
           { amount: null, category_id: null },
         ],
   );
-  useEffect(() => setTransferTo(t.transfer_account_id), [t.transfer_account_id]);
+  useEffect(() => {
+    setTransferTo(t.transfer_account_id);
+  }, [t.transfer_account_id]);
 
   const signed = (amount ?? 0) * (incoming ? 1 : -1);
   const partsTotal = parts.reduce((s, p) => s + (p.amount ?? 0), 0);

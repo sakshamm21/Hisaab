@@ -136,3 +136,11 @@ def test_settings_backup_export(client):
     csv = client.get("/api/export/transactions.csv").text
     assert csv.startswith("date,account,payee,category")
     assert "transactions" in client.get("/api/export/all.json").json()
+
+
+def test_categorize_payee(client):
+    cats = {c["name"]: c["id"] for g in client.get("/api/categories").json() for c in g["categories"]}
+    r = client.post("/api/transactions/categorize-payee", json={"payee": "chai point", "category_id": cats["Eating out"]}).json()
+    assert r["updated"] > 3
+    items = client.get("/api/transactions", params={"q": "Chai Point", "limit": 200}).json()["items"]
+    assert all(t["category"] == "Eating out" for t in items)

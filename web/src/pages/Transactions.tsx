@@ -1,11 +1,13 @@
-import { CheckCheck, Filter, Plus, Search, Tag, Trash2, Upload, X } from 'lucide-react';
+import { CheckCheck, Filter, Plus, Search, Sparkles, Tag, Trash2, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { CategoryList, CategoryPicker, useCategoryMap } from '../components/CategoryPicker';
-import { Button, Input, Select, Tabs } from '../components/forms';
+import { Button, Dialog, Input, Select, Tabs } from '../components/forms';
 import { TransactionRow } from '../components/TransactionRow';
 import { Amount, Kbd, PageHeader, Skeleton, Surface } from '../components/ui';
+import { useAiStatus } from '../lib/ai';
 import { api, type Transaction } from '../lib/api';
 import { cn } from '../lib/cn';
 import { updateTransaction, useAccounts, useMoneyMutation, useTransactions, type TxFilters } from '../lib/queries';
@@ -101,7 +103,9 @@ function AllTransactions({
     const h = setTimeout(() => search !== (filters.q ?? '') && setParam('q', search || null), 250);
     return () => clearTimeout(h);
   }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => setSelected(new Set()), [params]);
+  useEffect(() => {
+    setSelected(new Set());
+  }, [params]);
 
   const days = useMemo(() => groupByDay(data?.items ?? []), [data]);
   const active = [...params.keys()].filter((k) => k !== 'q').length;
@@ -313,9 +317,12 @@ function Inbox() {
           <span>
             <Kbd>J</Kbd> <Kbd>K</Kbd> move · <Kbd>C</Kbd> category · <Kbd>A</Kbd> accept · <Kbd>E</Kbd> edit
           </span>
-          <Button size="sm" variant="ghost" onClick={() => acceptAll.mutate(undefined)}>
-            <CheckCheck className="size-3.5" /> Accept all categorized
-          </Button>
+          <span className="flex gap-1">
+            <AiSuggest />
+            <Button size="sm" variant="ghost" onClick={() => acceptAll.mutate(undefined)}>
+              <CheckCheck className="size-3.5" /> Accept all categorized
+            </Button>
+          </span>
         </div>
         <ul>
           {items.map((t, i) => (
@@ -369,4 +376,56 @@ function formatDay(iso: string) {
   if (d.toDateString() === today.toDateString()) return 'Today';
   if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
   return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+type Suggestion = { payee: string; category_id: number; category: string; count: number };
+
+/** Ask the AI to suggest categories for unknown merchants. Only merchant names are sent. */
+function AiSuggest() {
+  const { data: status } = useAiStatus();
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<(Suggestion & { keep: boolean })[] | null>(null);
+  const apply = useMoneyMutation(
+    async () => {
+      for (const s of items!.filter((x) => x.keep)) {
+        await api('/transactions/categorize-payee', { method: 'POST', json: { payee: s.payee, category_id: s.category_id, only_uncategorized: true } });
+      }
+    },
+    { success: 'Categorized, and remembered for next time', onSuccess: () => setItems(null) },
+  );
+  if (!status?.ready) return null;
+  async function run() {
+    setLoading(true);
+    try {
+      const r = await api<{ suggestions: Suggestion[] }>('/ai/categorize', { method: 'POST' });
+      if (!r.suggestions.length) toast.info('No confident suggestions. The rest are probably small shops or people.');
+      else setItems(r.suggestions.map((s) => ({ ...s, keep: true })));
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <>
+      <Button size="sm" variant="ghost" onClick={run} disabled={loading}>
+        <Sparkles className="size-3.5" /> {loading ? 'Asking…' : 'Suggest with AI'}
+      </Button>
+      <Dialog open={!!items} onClose={() => setItems(null)} title="AI suggestions" footer={<>
+        <Button onClick={() => setItems(null)}>Cancel</Button>
+        <Button variant="primary" disabled={!items?.some((x) => x.keep) || apply.isPending} onClick={() => apply.mutate(undefined)}>Apply {items?.filter((x) => x.keep).length}</Button>
+      </>}>
+        <p className="mb-3 text-sm text-muted">Only merchant names were sent; payments to people weren't. Untick any that look wrong.</p>
+        <ul className="divide-y divide-border">
+          {items?.map((s, i) => (
+            <li key={s.payee} className="flex items-center gap-3 py-2 text-sm">
+              <input type="checkbox" checked={s.keep} onChange={(e) => setItems((xs) => xs!.map((x, j) => (j === i ? { ...x, keep: e.target.checked } : x)))} aria-label={`Apply to ${s.payee}`} />
+              <span className="flex-1 truncate">{s.payee} <span className="text-xs text-subtle">{s.count}×</span></span>
+              <span className="text-primary">{s.category}</span>
+            </li>
+          ))}
+        </ul>
+      </Dialog>
+    </>
+  );
 }
