@@ -93,7 +93,7 @@ function Sidebar({ onSearch, onAdd, demo }: { onSearch: () => void; onAdd: () =>
         <Kbd className="ml-auto">{isMac ? '⌘K' : 'Ctrl K'}</Kbd>
       </button>
 
-      <nav className="mt-6 flex-1 space-y-6 overflow-y-auto">
+      <nav className="mt-6 flex-1 space-y-6 overflow-y-auto [scrollbar-width:none]">
         {NAV_SECTIONS.map((section) => (
           <div key={section.title}>
             <p className="eyebrow px-3 pb-2">{section.title}</p>

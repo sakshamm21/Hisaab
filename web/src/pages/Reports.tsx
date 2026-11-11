@@ -185,7 +185,7 @@ function CashFlow({ period }: { period: string }) {
   const colorOf = (index: number) => {
     const n = data.nodes[index];
     if (n.kind === 'income') return n.name === 'From savings' ? 'var(--expense)' : 'var(--income)';
-    if (n.kind === 'hub') return 'var(--foreground)';
+    if (n.kind === 'hub') return 'var(--muted)';
     if (n.kind === 'saved') return 'var(--income)';
     return groupColor.get(parentGroup(index) ?? '') ?? OTHER;
   };
@@ -217,12 +217,15 @@ function CashFlow({ period }: { period: string }) {
               link={(props: { sourceX: number; targetX: number; sourceY: number; targetY: number; sourceControlX: number; targetControlX: number; linkWidth: number; index: number; payload: { target: { index?: number } & { name: string } } }) => {
                 const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, payload } = props;
                 const target = data.nodes.findIndex((n) => n.name === payload.target.name);
+                // Flows into "Money in" take the income source's colour; everything else takes its destination's.
+                const source = data.nodes.findIndex((n) => n.name === (payload as unknown as { source: { name: string } }).source.name);
+                const tint = data.nodes[target]?.kind === 'hub' ? colorOf(source) : colorOf(target);
                 return (
                   <path
                     d={`M${sourceX},${sourceY} C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}`}
                     fill="none"
-                    stroke={colorOf(target)}
-                    strokeOpacity={0.28}
+                    stroke={tint}
+                    strokeOpacity={0.3}
                     strokeWidth={Math.max(linkWidth, 1)}
                   />
                 );

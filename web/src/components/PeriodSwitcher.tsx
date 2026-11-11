@@ -8,6 +8,11 @@ export function shiftPeriod(label: string, n: number) {
   return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
 }
 
+export function monthName(period: string) {
+  const [y, m] = period.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+}
+
 export function PeriodSwitcher({
   period,
   label,
@@ -26,7 +31,7 @@ export function PeriodSwitcher({
       <button aria-label="Previous month" onClick={() => onChange(shiftPeriod(period, -1))} className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface-muted hover:text-foreground">
         <ChevronLeft className="size-4" />
       </button>
-      <span className="min-w-36 px-2 text-center text-sm font-medium">{label ?? period}</span>
+      <span className="min-w-36 px-2 text-center text-sm font-medium">{label ?? monthName(period)}</span>
       <button aria-label="Next month" onClick={() => onChange(shiftPeriod(period, 1))} className="grid size-8 place-items-center rounded-full text-muted hover:bg-surface-muted hover:text-foreground">
         <ChevronRight className="size-4" />
       </button>

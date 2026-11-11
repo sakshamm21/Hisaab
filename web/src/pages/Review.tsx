@@ -104,7 +104,7 @@ export function Review() {
             </Surface>
 
             <Surface className="p-6">
-              <SectionTitle title="Bud" accent="gets" />
+              <SectionTitle title="Your" accent="budgets" />
               {!data.budgets.count ? (
                 <p className="text-sm text-muted">No budgets were set for this month.</p>
               ) : (

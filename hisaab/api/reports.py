@@ -45,8 +45,8 @@ def trends(db: DB, months: Annotated[int, Query(ge=2, le=36)] = 12, period: Peri
                                                             "color": "#8b8693"})} for k, v in ranked if v > 0]
     nonzero = [m for m in out if m["spending"]]
     return {"months": out, "categories": categories,
-            "average_spending": round(sum(m["spending"] for m in nonzero) / len(nonzero)) if nonzero else 0,
-            "average_income": round(sum(m["income"] for m in nonzero) / len(nonzero)) if nonzero else 0}
+            "average_spending": round(sum(m["spending"] for m in nonzero) / len(nonzero) / 100) * 100 if nonzero else 0,
+            "average_income": round(sum(m["income"] for m in nonzero) / len(nonzero) / 100) * 100 if nonzero else 0}
 
 
 @router.get("/cashflow")

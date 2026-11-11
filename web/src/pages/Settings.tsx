@@ -221,7 +221,7 @@ function Data() {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Surface className="p-5">
-        <SectionTitle title="Back" accent="ups" right={<Button size="sm" variant="primary" onClick={() => make.mutate(undefined)}>Back up now</Button>} />
+        <SectionTitle title="Your" accent="backups" right={<Button size="sm" variant="primary" onClick={() => make.mutate(undefined)}>Back up now</Button>} />
         <p className="mb-4 text-sm text-muted">Hisaab saves a copy every day you open it and keeps the last 14. Copy one to a pen drive or cloud folder now and then.</p>
         <ul className="max-h-80 divide-y divide-border overflow-y-auto text-sm">
           {backups?.map((b) => (
@@ -235,7 +235,7 @@ function Data() {
         <input ref={file} type="file" accept=".db" className="hidden" onChange={(e) => e.target.files?.[0] && restore(e.target.files[0])} />
       </Surface>
       <Surface className="p-5">
-        <SectionTitle title="Ex" accent="port" />
+        <SectionTitle title="Export" accent="your data" />
         <p className="mb-4 text-sm text-muted">Your data is yours. Take it to a spreadsheet or anywhere else.</p>
         <div className="flex flex-wrap gap-2">
           <a href="/api/export/transactions.csv" download><Button><Download className="size-4" /> Transactions (CSV)</Button></a>
