@@ -1,6 +1,7 @@
 # Hisaab: personal finance tracker, end-to-end plan
 
-> Working name: **Hisaab** ("the accounts / the reckoning"). Easy to change later.
+> **Status (11 Nov 2026): v1.0.0. Phases 0–5 are built and merged.** The "Later" items below remain open.
+> Name: **Hisaab** ("the accounts / the reckoning").
 
 A local-first money tracker that runs on your own computer. One command starts it, it opens in
 your browser, and all your data is a single SQLite file on your disk. It should answer three

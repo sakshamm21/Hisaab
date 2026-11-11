@@ -1,0 +1,69 @@
+name: Release
+
+# Push a tag like v1.0.0 to build the package and publish a GitHub Release with the wheel attached.
+# Publishing to PyPI as well is optional: set up a PyPI "trusted publisher" for this repo and
+# workflow, then set the repository variable PUBLISH_TO_PYPI to "true".
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: cd web && npm ci && npm run build
+      - run: pip install -e '.[dev]' && pytest -q
+      - name: Version matches the tag
+        run: python -c "import hisaab,sys; t='${{ github.ref_name }}'.lstrip('v'); sys.exit(0 if hisaab.__version__ == t else f'tag {t} != package {hisaab.__version__}')"
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* --repo "${{ github.repository }}" --title "Hisaab ${{ github.ref_name }}" --notes "Install:
+
+          \`\`\`
+          pipx install https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/hisaab-${GITHUB_REF_NAME#v}-py3-none-any.whl
+          hisaab --demo
+          \`\`\`
+
+          See the README for setup, importing statements and the AI assistant."
+
+  pypi:
+    needs: build
+    if: vars.PUBLISH_TO_PYPI == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1

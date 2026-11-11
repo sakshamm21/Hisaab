@@ -34,3 +34,32 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run build
+
+  # Build the package exactly as a release would, install it in a clean environment, and run it.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: cd web && npm ci && npm run build
+      - run: pip install build && python -m build
+      - name: Wheel contains the UI
+        run: python -c "import zipfile,glob,sys; n=zipfile.ZipFile(glob.glob('dist/*.whl')[0]).namelist(); sys.exit(0 if any(x.endswith('static/index.html') for x in n) else 1)"
+      - name: Install and run
+        run: |
+          python -m venv /tmp/h && /tmp/h/bin/pip install dist/*.whl
+          /tmp/h/bin/hisaab --version
+          (/tmp/h/bin/hisaab --demo --no-browser --port 8777 --data-dir /tmp/hd &) ; sleep 6
+          curl -sf localhost:8777/api/health
+          curl -sf localhost:8777/ | grep -q "<title>Hisaab</title>"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
