@@ -388,3 +388,23 @@ def tags(db: DB) -> list[dict]:
         for t in text.split():
             counts[t] = counts.get(t, 0) + 1
     return [{"tag": t, "count": n} for t, n in sorted(counts.items(), key=lambda kv: -kv[1])]
+
+
+class PayeeCategoryIn(BaseModel):
+    payee: str = Field(min_length=1)
+    category_id: int
+    only_uncategorized: bool = False
+
+
+@router.post("/transactions/categorize-payee")
+def categorize_payee(body: PayeeCategoryIn, db: DB) -> dict:
+    """Put every transaction from a payee in a category, and remember it for next time."""
+    extra = " AND category_id IS NULL" if body.only_uncategorized else ""
+    with db:
+        n = db.execute(
+            f"UPDATE transactions SET category_id = ?, reviewed = 1, updated_at = datetime('now')"
+            f" WHERE payee = ? COLLATE NOCASE AND transfer_id IS NULL AND split_parent_id IS NULL{extra}",
+            (body.category_id, body.payee),
+        ).rowcount
+        learn(db, body.payee, body.category_id)
+    return {"updated": n}

@@ -1,6 +1,6 @@
 import { Command } from 'cmdk';
 import { AnimatePresence, motion } from 'motion/react';
-import { CalendarCheck, Eye, EyeOff, Moon, Plus, Search, Sun, Upload } from 'lucide-react';
+import { CalendarCheck, Eye, EyeOff, Moon, Plus, Search, Sparkles, Sun, Upload } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -12,10 +12,12 @@ export function CommandPalette({
   open,
   onOpenChange,
   onQuickAdd,
+  onAsk,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onQuickAdd: () => void;
+  onAsk: () => void;
 }) {
   const navigate = useNavigate();
   const { toggleTheme, privacy, togglePrivacy } = usePreferences();
@@ -73,6 +75,10 @@ export function CommandPalette({
                     <Plus className="size-4 text-muted" />
                     <span>Add a transaction</span>
                     <Kbd className="ml-auto">N</Kbd>
+                  </Item>
+                  <Item value="Ask about your money" keywords={['ai', 'assistant', 'question', 'chat']} onSelect={() => run(onAsk)}>
+                    <Sparkles className="size-4 text-muted" />
+                    <span>Ask about your money</span>
                   </Item>
                   <Item value="Month in review" keywords={['last month', 'summary', 'review']} onSelect={() => run(() => navigate('/review'))}>
                     <CalendarCheck className="size-4 text-muted" />

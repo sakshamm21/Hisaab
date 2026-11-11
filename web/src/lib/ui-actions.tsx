@@ -4,12 +4,14 @@ export type UiActions = {
   openQuickAdd: () => void;
   openTransaction: (id: number) => void;
   openPalette: () => void;
+  openAsk: () => void;
 };
 
 export const UiActionsContext = createContext<UiActions>({
   openQuickAdd: () => {},
   openTransaction: () => {},
   openPalette: () => {},
+  openAsk: () => {},
 });
 
 export const useUiActions = () => useContext(UiActionsContext);

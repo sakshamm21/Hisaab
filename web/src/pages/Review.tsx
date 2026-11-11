@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowDownRight, ArrowUpRight, CalendarCheck, Lightbulb } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, CalendarCheck, Lightbulb, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
 
 import { CategoryIcon } from '../components/CategoryIcon';
 import { Button } from '../components/forms';
 import { PeriodSwitcher, shiftPeriod } from '../components/PeriodSwitcher';
 import { Amount, PageHeader, SectionTitle, Skeleton, Surface } from '../components/ui';
+import { useAiStatus } from '../lib/ai';
 import { api } from '../lib/api';
 import { cn } from '../lib/cn';
 import { formatMoney } from '../lib/money';
@@ -45,6 +48,20 @@ export function Review() {
   const period = param ?? latest;
   const { data } = useQuery({ queryKey: ['review', period], queryFn: () => api<ReviewData>(`/review/${period}`), enabled: !!period });
   const next = period ? shiftPeriod(period, 1) : '';
+  const { data: ai } = useAiStatus();
+  const [aiText, setAiText] = useState<Record<string, string>>({});
+  const [writing, setWriting] = useState(false);
+  async function writeUp() {
+    setWriting(true);
+    try {
+      const r = await api<{ text: string }>(`/ai/review/${period}`, { method: 'POST' });
+      setAiText((t) => ({ ...t, [period!]: r.text }));
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setWriting(false);
+    }
+  }
   const plan = useMoneyMutation(() => api<{ changed: number }>(`/budget/${next}/fill`, { method: 'POST', json: { mode: 'average' } }), {
     success: (r) => (r.changed ? `Set ${r.changed} budgets for next month` : 'Next month already has budgets'),
     onSuccess: () => navigate('/budget'),
@@ -80,8 +97,13 @@ export function Review() {
               </div>
             </div>
             <div className="mt-8 space-y-2 border-t border-border pt-6 text-[17px] leading-relaxed">
-              {data.ai_summary ? <p data-amount>{data.ai_summary}</p> : data.summary_lines.map((l) => <p key={l} data-amount>{l}</p>)}
+              {aiText[data.period] ? <p data-amount>{aiText[data.period]}</p> : data.summary_lines.map((l) => <p key={l} data-amount>{l}</p>)}
             </div>
+            {ai?.ready && (
+              <Button size="sm" variant="ghost" className="mt-3" onClick={writeUp} disabled={writing}>
+                <Sparkles className="size-3.5" /> {writing ? 'Writing…' : aiText[data.period] ? 'Write it again' : 'Write it up with AI'}
+              </Button>
+            )}
           </Surface>
 
           <div className="grid gap-6 lg:grid-cols-2">

@@ -45,7 +45,9 @@ function General() {
   const { data: settings } = useSettings();
   const qc = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
-  useEffect(() => settings && setForm(settings), [settings]);
+  useEffect(() => {
+    if (settings) setForm(settings);
+  }, [settings]);
   const save = useMoneyMutation(() => api('/settings', { method: 'PUT', json: { values: {
     currency: form.currency, locale: form.locale, month_start_day: Number(form.month_start_day),
     needs_target: Number(form.needs_target ?? 50), wants_target: Number(form.wants_target ?? 30), savings_target: Number(form.savings_target ?? 20),

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Moon, Plus, Search, Sun, Upload } from 'lucide-react';
+import { Eye, EyeOff, Moon, Plus, Search, Sparkles, Sun, Upload } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 
@@ -6,6 +6,7 @@ import { cn } from '../lib/cn';
 import { usePreferences } from '../lib/preferences';
 import { useAccounts, useMeta, useSummary } from '../lib/queries';
 import { isTyping, UiActionsContext, type UiActions } from '../lib/ui-actions';
+import { AskPanel } from './AskPanel';
 import { CommandPalette } from './CommandPalette';
 import { QuickAdd } from './QuickAdd';
 import { TransactionEditor } from './TransactionEditor';
@@ -19,6 +20,7 @@ export function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
+  const [askOpen, setAskOpen] = useState(false);
   const { data: meta } = useMeta();
   const { data: accounts, isSuccess, isFetching } = useAccounts();
   const location = useLocation();
@@ -28,12 +30,18 @@ export function AppShell() {
       openQuickAdd: () => setQuickAddOpen(true),
       openTransaction: (id) => setEditing(id),
       openPalette: () => setPaletteOpen(true),
+      openAsk: () => setAskOpen(true),
     }),
     [],
   );
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        setAskOpen((o) => !o);
+        return;
+      }
       if (isTyping(e) || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === 'n') {
         e.preventDefault();
@@ -52,8 +60,8 @@ export function AppShell() {
   return (
     <UiActionsContext.Provider value={actions}>
     <div className="min-h-dvh">
-      <Sidebar onSearch={() => setPaletteOpen(true)} onAdd={() => setQuickAddOpen(true)} demo={meta?.demo ?? false} />
-      <MobileTopBar onSearch={() => setPaletteOpen(true)} />
+      <Sidebar onSearch={() => setPaletteOpen(true)} onAdd={() => setQuickAddOpen(true)} onAsk={() => setAskOpen(true)} demo={meta?.demo ?? false} />
+      <MobileTopBar onSearch={() => setPaletteOpen(true)} onAsk={() => setAskOpen(true)} />
 
       <main className="px-4 pt-6 pb-32 sm:px-8 lg:ml-[264px] lg:px-12 lg:pt-14 lg:pb-16">
         <div className="mx-auto max-w-6xl">
@@ -67,15 +75,16 @@ export function AppShell() {
       </main>
 
       <MobileDock onAdd={() => setQuickAddOpen(true)} />
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onQuickAdd={() => setQuickAddOpen(true)} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onQuickAdd={() => setQuickAddOpen(true)} onAsk={() => setAskOpen(true)} />
       <QuickAdd open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       <TransactionEditor id={editing} onClose={() => setEditing(null)} />
+      <AskPanel open={askOpen} onClose={() => setAskOpen(false)} />
     </div>
     </UiActionsContext.Provider>
   );
 }
 
-function Sidebar({ onSearch, onAdd, demo }: { onSearch: () => void; onAdd: () => void; demo: boolean }) {
+function Sidebar({ onSearch, onAdd, onAsk, demo }: { onSearch: () => void; onAdd: () => void; onAsk: () => void; demo: boolean }) {
   const { data: summary } = useSummary();
   const navigate = useNavigate();
   return (
@@ -91,6 +100,14 @@ function Sidebar({ onSearch, onAdd, demo }: { onSearch: () => void; onAdd: () =>
         <Search className="size-4 shrink-0" />
         <span className="truncate whitespace-nowrap">Search or jump to…</span>
         <Kbd className="ml-auto">{isMac ? '⌘K' : 'Ctrl K'}</Kbd>
+      </button>
+      <button
+        onClick={onAsk}
+        className="mt-2 flex h-10 items-center gap-2.5 rounded-full bg-primary-soft px-3.5 text-sm text-primary-soft-foreground transition hover:brightness-95"
+      >
+        <Sparkles className="size-4 shrink-0" />
+        <span className="truncate whitespace-nowrap">Ask anything</span>
+        <Kbd className="ml-auto border-transparent bg-transparent text-current">{isMac ? '⌘J' : 'Ctrl J'}</Kbd>
       </button>
 
       <nav className="mt-6 flex-1 space-y-6 overflow-y-auto [scrollbar-width:none]">
@@ -196,11 +213,14 @@ function PrivacyToggle() {
   );
 }
 
-function MobileTopBar({ onSearch }: { onSearch: () => void }) {
+function MobileTopBar({ onSearch, onAsk }: { onSearch: () => void; onAsk: () => void }) {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur lg:hidden">
       <Logo />
       <div className="flex items-center gap-1">
+        <IconButton label="Ask about your money" onClick={onAsk}>
+          <Sparkles className="size-[18px]" />
+        </IconButton>
         <IconButton label="Search" onClick={onSearch}>
           <Search className="size-[18px]" />
         </IconButton>
